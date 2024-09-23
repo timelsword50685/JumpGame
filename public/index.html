@@ -6,11 +6,30 @@
     <title>Three.js Rabbit Game</title>
     <style>
         body { margin: 0; overflow: hidden; }
+        #controls {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link rel="stylesheet" href="./css/styles.css">
     <script src="./js/script.js" type="module"></script>
+
+    <div id="controls">
+        <button id="left">左</button>
+        <button id="up">上</button>
+        <button id="down">下</button>
+        <button id="right">右</button>
+    </div>
 </body>
 </html>
