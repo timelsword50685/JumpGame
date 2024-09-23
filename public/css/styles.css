@@ -1,0 +1,17 @@
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: Arial, sans-serif;
+}
+
+canvas {
+    border: 2px solid black;
+    margin-bottom: 20px;
+}
+
+#message {
+    margin-top: 10px;
+    font-size: 18px;
+    color: green;
+}
