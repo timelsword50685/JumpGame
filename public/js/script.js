@@ -1,6 +1,6 @@
 "use strict";
 
-import * as THREE from './three.module.js';
+// import * as THREE from './three.module.js';
 
 const MIN_GRID_SIZE = 2;
 const MAX_GRID_SIZE = 6;
