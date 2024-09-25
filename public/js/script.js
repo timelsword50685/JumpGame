@@ -6,6 +6,7 @@ const MAX_GRID_SIZE = 6;
 let scene, camera, renderer;
 let rabbit, carrot;
 let gridSize = getRandomGridSize(); // 隨機生成初始格子大小
+let commands = []; // 用於存儲指令
 
 init();
 animate();
@@ -26,14 +27,13 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     createFloorAndObjects(); // 創建地面和物體
-    // 監聽鍵盤事件
-    document.addEventListener('keydown', onDocumentKeyDown, false);
 
-    // 監聽虛擬按鈕事件
-    document.getElementById('left').addEventListener('click', () => moveRabbit(-1, 0));
-    document.getElementById('up').addEventListener('click', () => moveRabbit(0, -1));
-    document.getElementById('down').addEventListener('click', () => moveRabbit(0, 1));
-    document.getElementById('right').addEventListener('click', () => moveRabbit(1, 0));
+    // 設置按鈕監聽事件
+    document.getElementById('left').addEventListener('click', () => addCommand('left'));
+    document.getElementById('up').addEventListener('click', () => addCommand('up'));
+    document.getElementById('down').addEventListener('click', () => addCommand('down'));
+    document.getElementById('right').addEventListener('click', () => addCommand('right'));
+    document.getElementById('confirm').addEventListener('click', executeCommands);
 }
 
 function createFloorAndObjects() {
@@ -79,18 +79,50 @@ function getRandomPosition() {
     return { x, z };
 }
 
-const controls = {
-    87: { x: 0, z: -1 }, // W
-    83: { x: 0, z: 1 },  // S
-    65: { x: -1, z: 0 }, // A
-    68: { x: 1, z: 0 }   // D
-};
+function addCommand(direction) {
+    commands.push(direction);
+    displayCommands();
+}
 
-function onDocumentKeyDown(event) {
-    const control = controls[event.which];
-    if (control) {
-        moveRabbit(control.x, control.z);
+function displayCommands() {
+    const commandList = document.getElementById('commandList');
+    commandList.innerHTML = commands.join(' -> ');
+}
+
+function executeCommands() {
+    let currentIndex = 0;
+
+    function executeNextCommand() {
+        if (currentIndex >= commands.length) {
+            commands = []; // 清空命令
+            displayCommands();
+            return; // 所有命令執行完畢
+        }
+
+        const direction = commands[currentIndex];
+        currentIndex++;
+
+        // 根據命令移動兔子
+        switch (direction) {
+            case 'up':
+                moveRabbit(0, -1);
+                break;
+            case 'down':
+                moveRabbit(0, 1);
+                break;
+            case 'left':
+                moveRabbit(-1, 0);
+                break;
+            case 'right':
+                moveRabbit(1, 0);
+                break;
+        }
+
+        // 延遲下一個命令的執行
+        setTimeout(executeNextCommand, 500); // 每個命令間隔 500 毫秒
     }
+
+    executeNextCommand();
 }
 
 function moveRabbit(deltaX, deltaZ) {
