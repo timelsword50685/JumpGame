@@ -3,23 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js Rabbit Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="./js/script.js" type="module"></script>
+    <title>Three.js 兔子動畫</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
 </head>
 <body>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <link rel="stylesheet" href="./css/styles.css">
-    <script src="./js/script.js" type="module"></script>
-
-    <div id="controls">
+    <div>
         <button id="left">左</button>
         <button id="up">上</button>
         <button id="down">下</button>
         <button id="right">右</button>
-        <button id="confirm">確定</button>
-    </div>
-
-    <div id="commandContainer">
-        <div>命令順序：</div>
+        <button id="confirm">執行命令</button>
         <div id="commandList"></div>
     </div>
 </body>

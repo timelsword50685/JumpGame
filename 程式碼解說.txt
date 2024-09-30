@@ -1,123 +1,107 @@
-
+javascript
+複製程式碼
 "use strict";
-
+使用 "use strict" 開啟 JavaScript 的嚴格模式，這可以幫助捕捉潛在的錯誤並提高程式的健壯性。
+javascript
+複製程式碼
 const MIN_GRID_SIZE = 2;
 const MAX_GRID_SIZE = 6;
-
+定義了最小和最大的地圖大小，範圍是 2x2 到 6x6 的方形網格。
+javascript
+複製程式碼
 let scene, camera, renderer;
 let rabbit, carrot;
 let gridSize = getRandomGridSize(); // 隨機生成初始格子大小
 let commands = []; // 用於存儲指令
-
-let rabbitMaterial;  // 將 rabbitMaterial 定義為全局變數
-let rabbitTextures = [];
-let currentFrame = 0;
-let frameCount = 1; // 假設 GIF 分成 10 幀
-let animationSpeed = 100; // 每幀間隔 100 毫秒
-
+定義了 scene (場景), camera (相機), renderer (渲染器) 等變數，並且使用 getRandomGridSize() 隨機生成一個地圖大小。commands 用來存儲使用者的上下左右移動指令。
+javascript
+複製程式碼
 init();
 animate();
-
+程式的主流程：init() 函數負責初始化場景和物件，animate() 以動畫循環渲染場景。
+javascript
+複製程式碼
 function init() {
-    // 載入兔子的 GIF 幀
-    loadRabbitTextures();
-    // 建立場景
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x87CEEB); // 藍天背景
-
-    // 建立相機
+初始化 Three.js 的 scene (場景)，並將背景設置為天空藍。
+javascript
+複製程式碼
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(2, 5, 7); // 提升相機位置來看到整個場景
+    camera.position.set(2, 5, 7);
     camera.lookAt(0, 0, 0);
-
-    // 建立渲染器
+創建透視相機，設置相機位置和方向，使相機能夠俯瞰整個場景。
+javascript
+複製程式碼
     renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
-
-    // 設置按鈕監聽事件
+創建 WebGL 渲染器，並將渲染器的畫布添加到網頁中，填滿整個瀏覽器窗口。
+javascript
+複製程式碼
+    createFloorAndObjects(); // 創建地面和物體
+調用 createFloorAndObjects()，在場景中生成地面、兔子和紅蘿蔔。
+javascript
+複製程式碼
     document.getElementById('left').addEventListener('click', () => addCommand('left'));
     document.getElementById('up').addEventListener('click', () => addCommand('up'));
     document.getElementById('down').addEventListener('click', () => addCommand('down'));
     document.getElementById('right').addEventListener('click', () => addCommand('right'));
     document.getElementById('confirm').addEventListener('click', executeCommands);
-}
-
-function loadRabbitTextures() {
-    const loader = new THREE.TextureLoader();
-    let texturesLoaded = 0; // 計算已經加載的幀數
-
-    for (let i = 0; i < frameCount; i++) {
-        loader.load(`/pictures/${i}.png`, (texture) => {
-            rabbitTextures.push(texture);
-            texturesLoaded++;
-
-            // 當第一幀載入時，初始化 rabbitMaterial
-            if (i === 0) {
-                rabbitMaterial = new THREE.MeshBasicMaterial({ map: rabbitTextures[0] });
-            }
-
-            // 當所有幀載入完成時，調用 createFloorAndObjects()
-            if (texturesLoaded === frameCount) {
-                createFloorAndObjects();  // 所有幀都載入完成後才創建物體
-            }
-        });
-    }
-}
-
+為按鈕添加點擊事件監聽，點擊「左」、「上」、「下」、「右」按鈕時，會將相應的指令加入到 commands 陣列中。按下「確定」按鈕時，調用 executeCommands() 執行命令。
+javascript
+複製程式碼
 function createFloorAndObjects() {
-    // 清空場景中的物體
     while (scene.children.length > 0) {
         scene.remove(scene.children[0]);
     }
-
-    // 創建地面
+清空場景中現有的所有物件，準備重新生成地面、兔子和紅蘿蔔。
+javascript
+複製程式碼
     const floorGeometry = new THREE.PlaneGeometry(gridSize, gridSize);
     const floorMaterial = new THREE.MeshBasicMaterial({ color: 0x228B22 });
     const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-    floor.rotation.x = -Math.PI / 2; // 旋轉讓平面變成水平
+    floor.rotation.x = -Math.PI / 2;
     scene.add(floor);
-
-    // 隨機生成兔子的位置
+創建一個 gridSize x gridSize 大小的平面作為地面，並將其旋轉以使其水平放置。
+javascript
+複製程式碼
     const rabbitPosition = getRandomPosition();
-    rabbit = createObject(new THREE.BoxGeometry(0.5, 0.5, 0.5), rabbitMaterial, rabbitPosition);
-
-    // 隨機生成紅蘿蔔的位置，並避免與兔子重疤
+    rabbit = createObject(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial({ color: 0x808080 }), rabbitPosition);
+隨機生成兔子的初始位置，並使用立方體幾何體創建兔子的物件。
+javascript
+複製程式碼
     let carrotPosition;
     do {
         carrotPosition = getRandomPosition();
     } while (carrotPosition.x === rabbit.position.x && carrotPosition.z === rabbit.position.z);
     carrot = createObject(new THREE.CylinderGeometry(0.2, 0.2, 0.5, 32), new THREE.MeshBasicMaterial({ color: 0xFF8C00 }), carrotPosition);
-}
-
+隨機生成紅蘿蔔的位置，並確保紅蘿蔔與兔子的初始位置不重疊。
+javascript
+複製程式碼
 function createObject(geometry, material, position) {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(position.x, 0.25, position.z);
     scene.add(mesh);
     return mesh;
 }
-
-function getRandomGridSize() {
-    return Math.floor(Math.random() * (MAX_GRID_SIZE - MIN_GRID_SIZE + 1)) + MIN_GRID_SIZE;
-}
-
-function getRandomPosition() {
-    const halfGridSize = gridSize / 2 - 0.5;
-    const x = Math.floor(Math.random() * gridSize) - halfGridSize;
-    const z = Math.floor(Math.random() * gridSize) - halfGridSize;
-    return { x, z };
-}
-
+此函數根據給定的幾何體、材質和位置創建物件，並將其添加到場景中。
+javascript
+複製程式碼
 function addCommand(direction) {
     commands.push(direction);
     displayCommands();
 }
-
+當使用者點擊方向按鈕時，將對應的指令 ('left', 'up', 'down', 'right') 加入 commands 陣列，並刷新顯示當前指令。
+javascript
+複製程式碼
 function displayCommands() {
     const commandList = document.getElementById('commandList');
     commandList.innerHTML = commands.join(' -> ');
 }
-
+將 commands 中的指令列表顯示在網頁上，以「->」分隔顯示當前的移動順序。
+javascript
+複製程式碼
 function executeCommands() {
     let currentIndex = 0;
 
@@ -125,13 +109,14 @@ function executeCommands() {
         if (currentIndex >= commands.length) {
             commands = []; // 清空命令
             displayCommands();
-            return; // 所有命令執行完畢
+            return;
         }
-
+executeCommands 函數逐一執行儲存的指令。 currentIndex 追踪當前正在執行的命令位置。
+javascript
+複製程式碼
         const direction = commands[currentIndex];
         currentIndex++;
 
-        // 根據命令移動兔子
         switch (direction) {
             case 'up':
                 moveRabbit(0, -1);
@@ -147,49 +132,33 @@ function executeCommands() {
                 break;
         }
 
-        // 延遲下一個命令的執行
-        setTimeout(executeNextCommand, 500); // 每個命令間隔 500 毫秒
+        setTimeout(executeNextCommand, 500);
     }
 
     executeNextCommand();
 }
-
+根據每個指令移動兔子，並使用 setTimeout 延遲 500 毫秒執行下一個命令，以產生連續的移動效果。
+javascript
+複製程式碼
 function moveRabbit(deltaX, deltaZ) {
     rabbit.position.x += deltaX;
     rabbit.position.z += deltaZ;
 
-    // 邊界檢查
     rabbit.position.x = Math.max(-gridSize / 2 + 0.5, Math.min(rabbit.position.x, gridSize / 2 - 0.5));
     rabbit.position.z = Math.max(-gridSize / 2 + 0.5, Math.min(rabbit.position.z, gridSize / 2 - 0.5));
 
-    // 修正兔子的 Y 坐標，保持其不變，確保兔子不會沉入地面
-    rabbit.position.y = 0.25;  // 固定兔子的 Y 坐標
-    checkCarrotCollision();
-}
-
-function checkCarrotCollision() {
     if (rabbit.position.distanceTo(carrot.position) < 0.5) {
         console.log("兔子吃到了紅蘿蔔！");
         alert("兔子吃到了紅蘿蔔！");
         gridSize = getRandomGridSize();
-        createFloorAndObjects(); // 重置場景
+        createFloorAndObjects();
     }
-}    
-
+}
+moveRabbit 函數負責根據 X 和 Z 軸上的偏移量移動兔子，並檢查是否超出邊界。如果兔子靠近紅蘿蔔，將重置場景並生成新的地圖。
+javascript
+複製程式碼
 function animate() {
     requestAnimationFrame(animate);
-
-    // 更新兔子的材質以模擬動畫
-    if (rabbit && rabbitTextures.length > 0) {
-        currentFrame = (currentFrame + 1) % frameCount;
-        rabbit.material.map = rabbitTextures[currentFrame];
-    }
-
     renderer.render(scene, camera);
 }
-
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
+animate 函數創建動畫循環，不斷渲染場景並使兔子的移動生效。
