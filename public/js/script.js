@@ -1,4 +1,3 @@
-
 "use strict";
 
 const MIN_GRID_SIZE = 2;
@@ -9,26 +8,64 @@ let rabbit, carrot;
 let gridSize = getRandomGridSize(); // 隨機生成初始格子大小
 let commands = []; // 用於存儲指令
 
-let rabbitMaterial;  // 將 rabbitMaterial 定義為全局變數
 let rabbitTextures = [];
 let currentFrame = 0;
 let frameCount = 1; // 假設 GIF 分成 10 幀
 let animationSpeed = 100; // 每幀間隔 100 毫秒
+
+// 定義全局變數
+let textures = []; // 定義全局的 textures 數組
+let currentBackgroundIndex = 0; // 當前背景紋理索引
+let backgroundSwitchTime = 500; // 背景切換時間間隔，單位：毫秒
+let lastBackgroundSwitchTime = 0; // 上一次切換背景的時間
 
 init();
 animate();
 
 function init() {
     // 載入兔子的 GIF 幀
-    loadRabbitTextures();
+    loadCubeTextures();
+    
     // 建立場景
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87CEEB); // 藍天背景
+
+    const imagePaths = [
+        '/pictures/background/GAME_sky1_0.png',
+        '/pictures/background/GAME_sky2_0.png',
+        '/pictures/background/GAME_sky3_0.png',
+    ];
+
+    const textureLoader = new THREE.TextureLoader();
+    let texturesLoaded = 0;    
+
+    // 加載每張圖片
+    imagePaths.forEach((path, index) => {
+        textureLoader.load(path, (texture) => {
+            textures[index] = texture; // 使用全局的 textures 陣列
+            texturesLoaded++;
+
+            // 當所有圖片加載完畢後執行某個操作
+            if (texturesLoaded === imagePaths.length) {
+                setBackground(); // 設置初始背景
+            }
+        });
+    });
+
+    function setBackground() {
+        // 設置初始背景
+        scene.background = textures[currentBackgroundIndex]; // 使用全局的 textures
+    }
+    const radius = 7; // 假設相機與場景的距離是 7
+    const angle = Math.PI / 4; // 45 度角
+
+
 
     // 建立相機
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(2, 5, 7); // 提升相機位置來看到整個場景
-    camera.lookAt(0, 0, 0);
+    const height = 5; // 視角高度，可以調整這個值以控制視角的俯視角度
+    // 設置相機繞 Y 軸旋轉 45 度向左 (逆時針旋轉)
+    camera.position.set(radius * Math.sin(angle), height, radius * Math.cos(angle));
+    camera.lookAt(0, 0, 0); // 確保相機仍然對準場景中心
 
     // 建立渲染器
     renderer = new THREE.WebGLRenderer();
@@ -43,50 +80,55 @@ function init() {
     document.getElementById('confirm').addEventListener('click', executeCommands);
 }
 
-function loadRabbitTextures() {
+function loadCubeTextures() {
     const loader = new THREE.TextureLoader();
-    let texturesLoaded = 0; // 計算已經加載的幀數
+    
+    const texturePaths = [
+        '/pictures/chicken/C_face_0.png',
+        '/pictures/chicken/C_back_0.png',
+        '/pictures/chicken/C_top_0.png',
+        '/pictures/chicken/C_bottom_0.png',
+        '/pictures/chicken/GAME_right_0.png',
+        '/pictures/chicken/GAME_left_0.png',                                  
+    ];
 
-    for (let i = 0; i < frameCount; i++) {
-        loader.load(`/pictures/${i}.png`, (texture) => {
-            rabbitTextures.push(texture);
+    let texturesLoaded = 0;
+
+    for (let i = 0; i < texturePaths.length; i++) {
+        loader.load(texturePaths[i], (texture) => {
+            rabbitTextures[i] = texture; // 使用 rabbitTextures 陣列
             texturesLoaded++;
 
-            // 當第一幀載入時，初始化 rabbitMaterial
-            if (i === 0) {
-                rabbitMaterial = new THREE.MeshBasicMaterial({ map: rabbitTextures[0] });
-            }
+            if (texturesLoaded === texturePaths.length) {
+                const materials = rabbitTextures.map(tex => new THREE.MeshBasicMaterial({ map: tex }));
+                rabbit = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), materials); // 創建兔子
+                rabbit.position.set(0, 0.5, 0); // 初始位置
 
-            // 當所有幀載入完成時，調用 createFloorAndObjects()
-            if (texturesLoaded === frameCount) {
-                createFloorAndObjects();  // 所有幀都載入完成後才創建物體
+                scene.add(rabbit);
+
+                createFloorAndObjects();  // 等到 rabbit 初始化後再創建場景
             }
         });
     }
 }
 
 function createFloorAndObjects() {
-    // 清空場景中的物體
-    while (scene.children.length > 0) {
-        scene.remove(scene.children[0]);
-    }
+    // 只清除除 rabbit 之外的其他物體
+    scene.children = scene.children.filter(obj => obj === rabbit);
 
     // 創建地面
     const floorGeometry = new THREE.PlaneGeometry(gridSize, gridSize);
     const floorMaterial = new THREE.MeshBasicMaterial({ color: 0x228B22 });
     const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-    floor.rotation.x = -Math.PI / 2; // 旋轉讓平面變成水平
+    floor.rotation.x = -Math.PI / 2;
     scene.add(floor);
 
-    // 隨機生成兔子的位置
-    const rabbitPosition = getRandomPosition();
-    rabbit = createObject(new THREE.BoxGeometry(0.5, 0.5, 0.5), rabbitMaterial, rabbitPosition);
-
-    // 隨機生成紅蘿蔔的位置，並避免與兔子重疤
+    // 隨機生成紅蘿蔔的位置，並避免與兔子重疊
     let carrotPosition;
     do {
         carrotPosition = getRandomPosition();
     } while (carrotPosition.x === rabbit.position.x && carrotPosition.z === rabbit.position.z);
+    
     carrot = createObject(new THREE.CylinderGeometry(0.2, 0.2, 0.5, 32), new THREE.MeshBasicMaterial({ color: 0xFF8C00 }), carrotPosition);
 }
 
@@ -147,7 +189,6 @@ function executeCommands() {
                 break;
         }
 
-        // 延遲下一個命令的執行
         setTimeout(executeNextCommand, 500); // 每個命令間隔 500 毫秒
     }
 
@@ -155,6 +196,12 @@ function executeCommands() {
 }
 
 function moveRabbit(deltaX, deltaZ) {
+    if (!rabbit) {
+        console.error("Rabbit is not initialized.");
+        return;
+    }
+
+    // 更新兔子的位置
     rabbit.position.x += deltaX;
     rabbit.position.z += deltaZ;
 
@@ -162,8 +209,8 @@ function moveRabbit(deltaX, deltaZ) {
     rabbit.position.x = Math.max(-gridSize / 2 + 0.5, Math.min(rabbit.position.x, gridSize / 2 - 0.5));
     rabbit.position.z = Math.max(-gridSize / 2 + 0.5, Math.min(rabbit.position.z, gridSize / 2 - 0.5));
 
-    // 修正兔子的 Y 坐標，保持其不變，確保兔子不會沉入地面
-    rabbit.position.y = 0.25;  // 固定兔子的 Y 坐標
+    // 固定兔子的 Y 坐標，保持其在地面上
+    rabbit.position.y = rabbit.geometry.parameters.height / 2; // 使用兔子的高度確保其不會陷入地面
     checkCarrotCollision();
 }
 
@@ -183,6 +230,17 @@ function animate() {
     if (rabbit && rabbitTextures.length > 0) {
         currentFrame = (currentFrame + 1) % frameCount;
         rabbit.material.map = rabbitTextures[currentFrame];
+        rabbit.material.needsUpdate = true;  // 確保材質更新
+    }
+
+    // 背景循環播放
+    if (textures.length > 0) {
+        const now = Date.now();
+        if (now - lastBackgroundSwitchTime > backgroundSwitchTime) {
+            currentBackgroundIndex = (currentBackgroundIndex + 1) % textures.length; // 確保 textures 不為空
+            scene.background = textures[currentBackgroundIndex]; // 設置新的背景
+            lastBackgroundSwitchTime = now; // 更新上次切換時間
+        }
     }
 
     renderer.render(scene, camera);

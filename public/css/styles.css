@@ -1,24 +1,32 @@
-body { margin: 0; overflow: hidden; }
-#controls {
-    position: fixed;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 10px;
+body {
+    margin: 0;
+    overflow: hidden; /* 去掉滚动条 */
 }
-#commandContainer {
-    position: fixed;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 10px;
+
+#gameContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* 防止溢出 */
 }
-button {
-    padding: 10px 15px;
-    font-size: 16px;
+
+/* 背景动画 */
+.background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    animation: backgroundAnimation 20s infinite; /* 动画持续时间和循环 */
 }
-#commandList {
-    margin-top: 10px;
+
+@keyframes backgroundAnimation {
+    0% { background-image: url('/pictures/background/GAME_sky1_0.png'); }
+    33% { background-image: url('/pictures/background/GAME_sky2_0.png'); }
+    67% { background-image: url('/pictures/background/GAME_sky3_0.png'); }
+    100% { background-image: url('/pictures/background/GAME_sky1_0.png'); } /* 循环回到第一张 */
 }
