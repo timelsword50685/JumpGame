@@ -102,7 +102,7 @@ function loadCubeTextures() {
             if (texturesLoaded === texturePaths.length) {
                 const materials = rabbitTextures.map(tex => new THREE.MeshBasicMaterial({ map: tex }));
                 rabbit = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), materials); // 創建兔子
-                rabbit.position.set(0, 0.5, 0); // 初始位置
+                rabbit.position.set(0, 1, 0); // 初始位置
 
                 scene.add(rabbit);
 
@@ -208,6 +208,12 @@ function moveRabbit(deltaX, deltaZ) {
     const startZ = rabbit.position.z;
     const targetX = startX + deltaX;
     const targetZ = startZ + deltaZ;
+
+    // 邊界檢查，確保兔子不會跳出地圖範圍
+    const halfGridSize = gridSize / 2 - 0.5;
+    if (targetX < -halfGridSize || targetX > halfGridSize || targetZ < -halfGridSize || targetZ > halfGridSize) {
+        return; // 如果超過邊界，則返回並不進行跳躍
+    }    
 
     function updateJump() {
         const elapsedTime = Date.now() - startTime;
