@@ -116,9 +116,13 @@ function createFloorAndObjects() {
     // 只清除除 rabbit 之外的其他物體
     scene.children = scene.children.filter(obj => obj === rabbit);
 
+    // 加載地面紋理
+    const textureLoader = new THREE.TextureLoader();
+    const floorTexture = textureLoader.load('/pictures/underground/GAME_grass_0.png'); // 替換為您的圖片路徑
+
     // 創建地面
     const floorGeometry = new THREE.PlaneGeometry(gridSize, gridSize);
-    const floorMaterial = new THREE.MeshBasicMaterial({ color: 0x228B22 });
+    const floorMaterial = new THREE.MeshBasicMaterial({ map: floorTexture }); // 使用加載的紋理
     const floor = new THREE.Mesh(floorGeometry, floorMaterial);
     floor.rotation.x = -Math.PI / 2;
     scene.add(floor);
