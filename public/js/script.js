@@ -1,7 +1,7 @@
 "use strict";
 
-const MIN_GRID_SIZE = 2;
-const MAX_GRID_SIZE = 6;
+const MIN_GRID_SIZE = 4;
+const MAX_GRID_SIZE = 8;
 
 let scene, camera, renderer;
 let rabbit, carrot;
@@ -233,9 +233,9 @@ function moveRabbit(deltaX, deltaZ) {
 }
 
 function checkCarrotCollision() {
-    if (rabbit.position.distanceTo(carrot.position) < 0.5) {
-        console.log("兔子吃到了紅蘿蔔！");
-        alert("兔子吃到了紅蘿蔔！");
+    if (rabbit.position.distanceTo(carrot.position) < 0.8) {
+        console.log("小雞吃到了蟲蟲！");
+        alert("小雞吃到了蟲蟲！");
         gridSize = getRandomGridSize();
         createFloorAndObjects(); // 重置場景
     }
