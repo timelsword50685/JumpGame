@@ -139,7 +139,7 @@ function createFloorAndObjects() {
                  (carrotPosition.x === rabbit.position.x && carrotPosition.z === rabbit.position.z)); // 確保不與兔子重疊
         
         // 創建紅蘿蔔並添加到數組
-        carrot = createObject(new THREE.CylinderGeometry(0.2, 0.2, 0.5, 32), new THREE.MeshBasicMaterial({ color: 0xFF8C00 }), carrotPosition);
+        carrot = createObject(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial({ color: 0xFF8C00 }), carrotPosition);
         carrots.push(carrot); // 將紅蘿蔔加入數組
     }
 }
