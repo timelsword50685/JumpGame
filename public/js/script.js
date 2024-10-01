@@ -1,7 +1,7 @@
 "use strict";
 
-const MIN_GRID_SIZE = 4;
-const MAX_GRID_SIZE = 8;
+const MIN_GRID_SIZE = 6;
+const MAX_GRID_SIZE = 10;
 
 let scene, camera, renderer;
 let rabbit, carrot;
@@ -55,14 +55,14 @@ function init() {
         // 設置初始背景
         scene.background = textures[currentBackgroundIndex]; // 使用全局的 textures
     }
-    const radius = 7; // 假設相機與場景的距離是 7
+    const radius = 8; // 假設相機與場景的距離是 7
     const angle = Math.PI / 4; // 45 度角
 
 
 
     // 建立相機
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const height = 5; // 視角高度，可以調整這個值以控制視角的俯視角度
+    const height = 8; // 視角高度，可以調整這個值以控制視角的俯視角度
     // 設置相機繞 Y 軸旋轉 45 度向左 (逆時針旋轉)
     camera.position.set(radius * Math.sin(angle), height, radius * Math.cos(angle));
     camera.lookAt(0, 0, 0); // 確保相機仍然對準場景中心
@@ -145,8 +145,8 @@ function getRandomGridSize() {
 
 function getRandomPosition() {
     const halfGridSize = gridSize / 2 - 0.5;
-    const x = Math.floor(Math.random() * gridSize) - halfGridSize;
-    const z = Math.floor(Math.random() * gridSize) - halfGridSize;
+    const x = Math.floor(Math.random() * (gridSize - 2)) - (halfGridSize - 1); // 限制兔子不生成在邊界
+    const z = Math.floor(Math.random() * (gridSize - 2)) - (halfGridSize - 1); // 同樣限制 z 軸位置
     return { x, z };
 }
 
@@ -196,46 +196,88 @@ function executeCommands() {
 }
 
 function moveRabbit(deltaX, deltaZ) {
-    if (!rabbit) {
-        console.error("Rabbit is not initialized.");
-        return;
+    const targetX = rabbit.position.x + deltaX;
+    const targetZ = rabbit.position.z + deltaZ;
+
+    const halfGridSize = gridSize / 2 - 0.5;
+
+    // 檢查目標位置是否在範圍內
+    if (targetX < -halfGridSize || targetX > halfGridSize || targetZ < -halfGridSize || targetZ > halfGridSize) {
+        console.log("兔子嘗試跳出格子邊界，移動無效");
+        return; // 如果目標位置超出範圍，則不執行移動
     }
 
+    // 繼續進行跳躍的邏輯
     const jumpHeight = 0.5; // 跳躍的高度
     const jumpDuration = 500; // 跳躍動作持續時間（毫秒）
     const startTime = Date.now();
     const startX = rabbit.position.x;
     const startZ = rabbit.position.z;
-    const targetX = startX + deltaX;
-    const targetZ = startZ + deltaZ;
-
-    // 邊界檢查，確保兔子不會跳出地圖範圍
-    const halfGridSize = gridSize / 2 - 0.5;
-    if (targetX < -halfGridSize || targetX > halfGridSize || targetZ < -halfGridSize || targetZ > halfGridSize) {
-        return; // 如果超過邊界，則返回並不進行跳躍
-    }    
 
     function updateJump() {
         const elapsedTime = Date.now() - startTime;
         const t = elapsedTime / jumpDuration; // 時間進度，從 0 到 1
 
         if (t >= 1) {
-            // 跳躍結束，固定位置
             rabbit.position.x = targetX;
             rabbit.position.z = targetZ;
             rabbit.position.y = rabbit.geometry.parameters.height / 2; // 回到地面
-            checkCarrotCollision(); // 檢查是否碰到紅蘿蔔
+
+            checkCarrotCollision();  // 檢查是否撞到紅蘿蔔
+            moveCarrotRandomly();    // 每次兔子移動後紅蘿蔔也隨機移動
         } else {
-            // 計算新的位置，模擬跳躍過程
             rabbit.position.x = startX + deltaX * t;
             rabbit.position.z = startZ + deltaZ * t;
-            rabbit.position.y = Math.sin(t * Math.PI) * jumpHeight + rabbit.geometry.parameters.height / 2; // Y 軸位置根據正弦函數變化
+            rabbit.position.y = Math.sin(t * Math.PI) * jumpHeight + rabbit.geometry.parameters.height / 2;
 
-            requestAnimationFrame(updateJump); // 繼續更新跳躍動作
+            requestAnimationFrame(updateJump);
         }
     }
 
     requestAnimationFrame(updateJump);
+}
+
+function moveCarrotRandomly() {
+    if (!carrot) {
+        console.error("Carrot is not initialized.");
+        return;
+    }
+
+    const jumpHeight = 0.2; // 紅蘿蔔跳躍的高度
+    const jumpDuration = 200; // 紅蘿蔔跳躍動作持續時間
+    const startTime = Date.now();
+    const startX = carrot.position.x;
+    const startZ = carrot.position.z;
+
+    // 隨機生成紅蘿蔔的新位置，確保不與兔子重疊
+    let targetPosition;
+    do {
+        targetPosition = getRandomPosition();
+    } while (targetPosition.x === rabbit.position.x && targetPosition.z === rabbit.position.z);
+
+    const targetX = targetPosition.x;
+    const targetZ = targetPosition.z;
+
+    function updateCarrotJump() {
+        const elapsedTime = Date.now() - startTime;
+        const t = elapsedTime / jumpDuration; // 時間進度，從 0 到 1
+
+        if (t >= 1) {
+            // 跳躍結束，固定位置
+            carrot.position.x = targetX;
+            carrot.position.z = targetZ;
+            carrot.position.y = 0.25; // 回到地面
+        } else {
+            // 計算新的位置，模擬跳躍過程
+            carrot.position.x = startX + (targetX - startX) * t;
+            carrot.position.z = startZ + (targetZ - startZ) * t;
+            carrot.position.y = Math.sin(t * Math.PI) * jumpHeight + 0.25; // Y 軸位置根據正弦函數變化
+
+            requestAnimationFrame(updateCarrotJump); // 繼續更新跳躍動作
+        }
+    }
+
+    requestAnimationFrame(updateCarrotJump);
 }
 
 function checkCarrotCollision() {
@@ -244,8 +286,9 @@ function checkCarrotCollision() {
         alert("小雞吃到了蟲蟲！");
         gridSize = getRandomGridSize();
         createFloorAndObjects(); // 重置場景
+        moveCarrotRandomly(); // 讓紅蘿蔔移動
     }
-}    
+}   
 
 function animate() {
     requestAnimationFrame(animate);
