@@ -111,29 +111,37 @@ function loadCubeTextures() {
         });
     }
 }
-
+let carrots = [];
 function createFloorAndObjects() {
     // 只清除除 rabbit 之外的其他物體
     scene.children = scene.children.filter(obj => obj === rabbit);
 
     // 加載地面紋理
     const textureLoader = new THREE.TextureLoader();
-    const floorTexture = textureLoader.load('/pictures/underground/GAME_grass_0.png'); // 替換為您的圖片路徑
+    const floorTexture = textureLoader.load('/pictures/underground/GAME_grass_0.png');
 
     // 創建地面
     const floorGeometry = new THREE.PlaneGeometry(gridSize, gridSize);
-    const floorMaterial = new THREE.MeshBasicMaterial({ map: floorTexture }); // 使用加載的紋理
+    const floorMaterial = new THREE.MeshBasicMaterial({ map: floorTexture });
     const floor = new THREE.Mesh(floorGeometry, floorMaterial);
     floor.rotation.x = -Math.PI / 2;
     scene.add(floor);
 
-    // 隨機生成紅蘿蔔的位置，並避免與兔子重疊
-    let carrotPosition;
-    do {
-        carrotPosition = getRandomPosition();
-    } while (carrotPosition.x === rabbit.position.x && carrotPosition.z === rabbit.position.z);
-    
-    carrot = createObject(new THREE.CylinderGeometry(0.2, 0.2, 0.5, 32), new THREE.MeshBasicMaterial({ color: 0xFF8C00 }), carrotPosition);
+    // 隨機生成紅蘿蔔的位置，最多生成三根紅蘿蔔
+    carrots = []; // 清空現有的紅蘿蔔
+    const maxCarrots = 3;
+
+    for (let i = 0; i < maxCarrots; i++) {
+        let carrotPosition;
+        do {
+            carrotPosition = getRandomPosition(); // 隨機生成位置
+        } while (carrots.some(carrot => carrot.position.x === carrotPosition.x && carrot.position.z === carrotPosition.z) || 
+                 (carrotPosition.x === rabbit.position.x && carrotPosition.z === rabbit.position.z)); // 確保不與兔子重疊
+        
+        // 創建紅蘿蔔並添加到數組
+        carrot = createObject(new THREE.CylinderGeometry(0.2, 0.2, 0.5, 32), new THREE.MeshBasicMaterial({ color: 0xFF8C00 }), carrotPosition);
+        carrots.push(carrot); // 將紅蘿蔔加入數組
+    }
 }
 
 function createObject(geometry, material, position) {
@@ -228,7 +236,7 @@ function moveRabbit(deltaX, deltaZ) {
             rabbit.position.y = rabbit.geometry.parameters.height / 2; // 回到地面
 
             checkCarrotCollision();  // 檢查是否撞到紅蘿蔔
-            moveCarrotRandomly();    // 每次兔子移動後紅蘿蔔也隨機移動
+            moveAllCarrotsRandomly(); // 每次兔子移動後紅蘿蔔也隨機移動
         } else {
             rabbit.position.x = startX + deltaX * t;
             rabbit.position.z = startZ + deltaZ * t;
@@ -241,9 +249,15 @@ function moveRabbit(deltaX, deltaZ) {
     requestAnimationFrame(updateJump);
 }
 
-function moveCarrotRandomly() {
+function moveAllCarrotsRandomly() {
+    for (const carrot of carrots) { // 遍歷所有紅蘿蔔
+        moveCarrotRandomly(carrot); // 讓每根紅蘿蔔隨機移動
+    }
+}
+
+function moveCarrotRandomly(carrot) {
     if (!carrot) {
-        console.error("Carrot is not initialized.");
+        console.error("No carrot to move.");
         return;
     }
 
@@ -285,14 +299,17 @@ function moveCarrotRandomly() {
 }
 
 function checkCarrotCollision() {
-    if (rabbit.position.distanceTo(carrot.position) < 0.8) {
-        console.log("小雞吃到了蟲蟲！");
-        alert("小雞吃到了蟲蟲！");
-        gridSize = getRandomGridSize();
-        createFloorAndObjects(); // 重置場景
-        moveCarrotRandomly(); // 讓紅蘿蔔移動
+    for (const carrot of carrots) { // 遍歷所有紅蘿蔔
+        if (rabbit.position.distanceTo(carrot.position) < 0.8) {
+            console.log("小雞吃到了蟲蟲！");
+            alert("小雞吃到了蟲蟲！");
+            gridSize = getRandomGridSize();
+            createFloorAndObjects(); // 重置場景
+            moveCarrotRandomly(); // 讓紅蘿蔔移動
+            break; // 碰撞檢查完成，跳出循環
+        }
     }
-}   
+}  
 
 function animate() {
     requestAnimationFrame(animate);
