@@ -1,7 +1,7 @@
 "use strict";
 
-const MIN_GRID_SIZE = 6;
-const MAX_GRID_SIZE = 10;
+const MIN_GRID_SIZE = 8;
+const MAX_GRID_SIZE = 12;
 
 let scene, camera, renderer;
 let rabbit, carrot;
@@ -131,7 +131,7 @@ function createFloorAndObjects() {
 
     // 隨機生成紅蘿蔔的位置，最多生成三根紅蘿蔔
     carrots = []; // 清空現有的紅蘿蔔
-    const maxCarrots = 3;
+    const maxCarrots = Math.floor(Math.random() * 3) + 1;
 
     for (let i = 0; i < maxCarrots; i++) {
         let carrotPosition;

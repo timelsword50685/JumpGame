@@ -7,18 +7,61 @@
     <script src="./js/script.js" type="module"></script>
     <title>Three.js 兔子動畫</title>
     <style>
-        body { margin: 0; }
-        canvas { display: block; }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #controlPanel {
+            position: fixed;
+            bottom: 10px; /* 调整与底部的距离 */
+            left: 50%;
+            transform: translateX(-50%); /* 水平居中 */
+            display: flex;
+            flex-direction: row; /* 按钮与Confirm并排 */
+            align-items: center;
+        }
+
+        #directionButtons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #directionButtons div {
+            display: flex;
+            justify-content: center;
+            margin-top: 5px;
+        }
+
+        button {
+            width: 50px;
+            height: 50px;
+            margin: 5px;
+            font-size: 16px;
+        }
+        #confirm{
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
-    <div>
-        <button id="left">左</button>
-        <button id="up">上</button>
-        <button id="down">下</button>
-        <button id="right">右</button>
-        <button id="confirm">執行命令</button>
-        <div id="commandList"></div>
+    <div id="controlPanel">
+        <div id="directionButtons">
+            <button id="up">Up</button>
+            <div>
+                <button id="left">Left</button>
+                <button id="down">Down</button>
+                <button id="right">Right</button>
+            </div>
+        </div>
+        <button id="confirm">Go</button>
     </div>
 </body>
+<footer>
+
+</footer>
 </html>
