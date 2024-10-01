@@ -84,12 +84,14 @@ function loadCubeTextures() {
     const loader = new THREE.TextureLoader();
     
     const texturePaths = [
-        '/pictures/chicken/C_face_0.png',
-        '/pictures/chicken/C_back_0.png',
+        '/pictures/chicken/GAME_left_0.png',
+        '/pictures/chicken/GAME_right_0.png',
+         
         '/pictures/chicken/C_top_0.png',
         '/pictures/chicken/C_bottom_0.png',
-        '/pictures/chicken/GAME_right_0.png',
-        '/pictures/chicken/GAME_left_0.png',                                  
+ 
+        '/pictures/chicken/C_face_0.png',
+        '/pictures/chicken/C_back_0.png',                                
     ];
 
     let texturesLoaded = 0;
@@ -218,6 +220,10 @@ function moveRabbit(deltaX, deltaZ) {
         console.log("兔子嘗試跳出格子邊界，移動無效");
         return; // 如果目標位置超出範圍，則不執行移動
     }
+
+    // 讓兔子朝向目標位置轉向
+    const targetPosition = new THREE.Vector3(targetX, rabbit.position.y, targetZ);
+    rabbit.lookAt(targetPosition);  // 使用 lookAt 讓兔子朝向移動的方向
 
     // 繼續進行跳躍的邏輯
     const jumpHeight = 0.5; // 跳躍的高度
