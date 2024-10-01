@@ -201,17 +201,35 @@ function moveRabbit(deltaX, deltaZ) {
         return;
     }
 
-    // 更新兔子的位置
-    rabbit.position.x += deltaX;
-    rabbit.position.z += deltaZ;
+    const jumpHeight = 0.5; // 跳躍的高度
+    const jumpDuration = 500; // 跳躍動作持續時間（毫秒）
+    const startTime = Date.now();
+    const startX = rabbit.position.x;
+    const startZ = rabbit.position.z;
+    const targetX = startX + deltaX;
+    const targetZ = startZ + deltaZ;
 
-    // 邊界檢查
-    rabbit.position.x = Math.max(-gridSize / 2 + 0.5, Math.min(rabbit.position.x, gridSize / 2 - 0.5));
-    rabbit.position.z = Math.max(-gridSize / 2 + 0.5, Math.min(rabbit.position.z, gridSize / 2 - 0.5));
+    function updateJump() {
+        const elapsedTime = Date.now() - startTime;
+        const t = elapsedTime / jumpDuration; // 時間進度，從 0 到 1
 
-    // 固定兔子的 Y 坐標，保持其在地面上
-    rabbit.position.y = rabbit.geometry.parameters.height / 2; // 使用兔子的高度確保其不會陷入地面
-    checkCarrotCollision();
+        if (t >= 1) {
+            // 跳躍結束，固定位置
+            rabbit.position.x = targetX;
+            rabbit.position.z = targetZ;
+            rabbit.position.y = rabbit.geometry.parameters.height / 2; // 回到地面
+            checkCarrotCollision(); // 檢查是否碰到紅蘿蔔
+        } else {
+            // 計算新的位置，模擬跳躍過程
+            rabbit.position.x = startX + deltaX * t;
+            rabbit.position.z = startZ + deltaZ * t;
+            rabbit.position.y = Math.sin(t * Math.PI) * jumpHeight + rabbit.geometry.parameters.height / 2; // Y 軸位置根據正弦函數變化
+
+            requestAnimationFrame(updateJump); // 繼續更新跳躍動作
+        }
+    }
+
+    requestAnimationFrame(updateJump);
 }
 
 function checkCarrotCollision() {
