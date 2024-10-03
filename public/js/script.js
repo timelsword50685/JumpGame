@@ -449,23 +449,19 @@ function moveEagleTowardsChick(chick) {
 
     function updateFlight() {
         const elapsedTime = Date.now() - startTime;
-        const t = elapsedTime / flyDuration; // 時間進度，從 0 到 1
+        const t = Math.min(elapsedTime / flyDuration, 1); // 時間進度，從 0 到 1
 
-        if (t >= 1) {
-            // 更新老鷹的位置到最終位置
-            eagle.position.x += deltaX;
-            eagle.position.z += deltaZ;
-            // 保持y軸位置
-            eagle.position.y = eagle.geometry.parameters.height / 2; // 回到地面
+        // 插值更新位置
+        eagle.position.x = startX + deltaX * t;
+        eagle.position.z = startZ + deltaZ * t;
+        eagle.position.y = Math.sin(t * Math.PI) * jumpHeight + (eagle.geometry.parameters.height / 2); // 根據時間進度改變y軸高度
 
-            checkChickCollision(); // 檢查是否撞到小雞
-        } else {
-            // 插值更新位置
-            eagle.position.x = startX + deltaX * t;
-            eagle.position.z = startZ + deltaZ * t;
-            eagle.position.y = Math.sin(t * Math.PI) * jumpHeight + eagle.geometry.parameters.height / 2; // 根據時間進度改變y軸高度
-
+        if (t < 1) {
             requestAnimationFrame(updateFlight);
+        } else {
+            // 確保老鷹正確落地
+            eagle.position.y = eagle.geometry.parameters.height / 2; // 回到地面
+            checkChickCollision(); // 檢查是否撞到小雞
         }
     }
 
