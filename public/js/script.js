@@ -331,7 +331,7 @@ function checkCarrotCollision() {
 }  
 
 function checkChickCollision() {
-    if (eagle.position.distanceTo(rabbit.position) < 0.8) {
+    if (eagle.position.distanceTo(rabbit.position) < 1) {
         console.log("老鷹捉到了小雞！");
         alert("老鷹捉到了小雞！");
         resetGame(); // 重置遊戲
