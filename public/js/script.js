@@ -322,8 +322,8 @@ function moveCarrotRandomly(carrot) {
 function checkCarrotCollision() {
     for (const carrot of carrots) { // 遍歷所有紅蘿蔔
         if (rabbit.position.distanceTo(carrot.position) < 0.8) {
-            console.log("小雞吃到了紅蘿蔔！");
-            alert("小雞吃到了紅蘿蔔！");
+            console.log("小雞吃到了蟲蟲！");
+            alert("小雞吃到了蟲蟲！");
             resetGame(); // 重置遊戲
             break; // 碰撞檢查完成，跳出循環
         }
@@ -331,7 +331,7 @@ function checkCarrotCollision() {
 }  
 
 function checkChickCollision() {
-    if (eagle.position.distanceTo(rabbit.position) < 1) {
+    if (eagle.position.distanceTo(rabbit.position) < 1.5) {
         console.log("老鷹捉到了小雞！");
         alert("老鷹捉到了小雞！");
         resetGame(); // 重置遊戲
@@ -340,7 +340,7 @@ function checkChickCollision() {
 
 // 創建老鷹
 function createEagle() {
-    const eagleGeometry = new THREE.BoxGeometry(1, 1, 1);
+    const eagleGeometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
     const eagleMaterial = new THREE.MeshBasicMaterial({ color: 0x8B4513 });
     eagle = new THREE.Mesh(eagleGeometry, eagleMaterial);
     
