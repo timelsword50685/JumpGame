@@ -1,7 +1,7 @@
 "use strict";
 
-const MIN_GRID_SIZE = 8;
-const MAX_GRID_SIZE = 12;
+const MIN_GRID_SIZE = 12;
+const MAX_GRID_SIZE = 16;
 
 let scene, camera, renderer;
 let rabbit, carrot;
@@ -9,6 +9,8 @@ let gridSize = getRandomGridSize(); // 隨機生成初始格子大小
 let commands = []; // 用於存儲指令
 
 let rabbitTextures = [];
+let eagleTextures = [];
+let wormTextures = [];
 let currentFrame = 0;
 let frameCount = 6; // 假設 GIF 分成 6 幀
 let animationSpeed = 100; // 每幀間隔 100 毫秒
@@ -23,6 +25,7 @@ let eagle; // 定義老鷹變數
 let eagleSpeed = 0.5; // 老鷹的移動速度，根據需要調整
 let eagleActive = false; // 控制老鷹是否可以活動
 let gameOver = false; // 遊戲結束標誌
+let controls; // 定義 OrbitControls 變數
 
 init();
 animate();
@@ -63,9 +66,9 @@ function init() {
 
     // 建立相機
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const radius = 8; // 假設相機與場景的距離是 8
-    const angle = Math.PI / 4; // 45 度角
-    const height = 8; // 視角高度，可以調整這個值以控制視角的俯視角度
+    const radius = 10; // 假設相機與場景的距離是 8
+    const angle = Math.PI / 8; // 45 度角
+    const height = 10; // 視角高度，可以調整這個值以控制視角的俯視角度
     // 設置相機繞 Y 軸旋轉 45 度向左 (逆時針旋轉)
     camera.position.set(radius * Math.sin(angle), height, radius * Math.cos(angle));
     camera.lookAt(0, 0, 0); // 確保相機仍然對準場景中心
@@ -74,6 +77,13 @@ function init() {
     renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
+
+    // 初始化 OrbitControls
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; // 啟用阻尼效果
+    controls.dampingFactor = 0.05; // 阻尼因子
+    controls.enableZoom = true; // 啟用縮放
+    controls.enablePan = false; // 禁用平移（可根據需要調整）
 
     // 設置按鈕監聽事件
     document.getElementById('left').addEventListener('click', () => addCommand('left'));
@@ -100,25 +110,33 @@ function loadCubeTextures() {
     let texturesLoaded = 0;
 
     for (let i = 0; i < texturePaths.length; i++) {
-        loader.load(texturePaths[i], (texture) => {
-            rabbitTextures[i] = texture; // 使用 rabbitTextures 陣列
-            texturesLoaded++;
+        loader.load(
+            texturePaths[i],
+            (texture) => {
+                rabbitTextures[i] = texture; // 使用 rabbitTextures 陣列
+                texturesLoaded++;
 
-            if (texturesLoaded === texturePaths.length) {
-                const materials = rabbitTextures.map(tex => new THREE.MeshBasicMaterial({ map: tex }));
-                rabbit = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), materials); // 創建兔子
-                rabbit.position.set(0, 0.5, 0); // 初始位置, y=0.5 to sit on the ground
+                if (texturesLoaded === texturePaths.length) {
+                    const materials = rabbitTextures.map(tex => new THREE.MeshBasicMaterial({ map: tex }));
+                    rabbit = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), materials); // 創建兔子
+                    rabbit.position.set(0, 0.5, 0); // 初始位置, y=0.5 to sit on the ground
 
-                scene.add(rabbit);
+                    scene.add(rabbit);
 
-                createFloorAndObjects();  // 等到 rabbit 初始化後再創建場景
+                    // 呼叫 async 函數，處理非同步紅蘿蔔創建
+                    createFloorAndObjects();  // 等到 rabbit 初始化後再創建場景
+                }
+            },
+            undefined,
+            (err) => {
+                console.error(`Error loading rabbit texture: ${texturePaths[i]}`, err);
             }
-        });
+        );
     }
 }
 
 let carrots = [];
-function createFloorAndObjects() {
+async function createFloorAndObjects() {
     // 只保留 rabbit 之外的其他物體
     scene.children = scene.children.filter(obj => obj === rabbit);
     
@@ -136,6 +154,16 @@ function createFloorAndObjects() {
     // 隨機生成紅蘿蔔的位置，最多生成三根紅蘿蔔
     carrots = []; // 清空現有的紅蘿蔔
     const maxCarrots = Math.floor(Math.random() * 3) + 1;
+    const texturePaths = [
+        '/pictures/worm/LINE_ALBUM_WORM_241008_LEFT.jpg',
+        '/pictures/worm/LINE_ALBUM_WORM_241008_RIGHT.jpg',
+         
+        '/pictures/worm/LINE_ALBUM_WORM_241008_UP.jpg',
+        '/pictures/worm/LINE_ALBUM_WORM_241008_BOTTOM.jpg',
+ 
+        '/pictures/worm/LINE_ALBUM_WORM_241008_FRONT.jpg',
+        '/pictures/worm/LINE_ALBUM_WORM_241008_BEHIND.jpg',                                
+    ];
 
     for (let i = 0; i < maxCarrots; i++) {
         let carrotPosition;
@@ -146,19 +174,53 @@ function createFloorAndObjects() {
             (carrotPosition.x === rabbit.position.x && carrotPosition.z === rabbit.position.z)
         ); // 確保不與兔子重疊
         
-        // 創建紅蘿蔔並添加到數組
-        carrot = createObject(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial({ color: 0xFF8C00 }), carrotPosition);
-        carrots.push(carrot); // 將紅蘿蔔加入數組
+        try {
+            // 創建紅蘿蔔並等待其被創建
+            const carrot = await createObject(new THREE.BoxGeometry(0.5, 0.5, 1), texturePaths, carrotPosition);
+            carrots.push(carrot); // 將紅蘿蔔加入數組
+        } catch (error) {
+            console.error("創建紅蘿蔔失敗:", error);
+        }
     }
 
     createEagle(); // 創建老鷹，放在兔子生成之後
 }
 
-function createObject(geometry, material, position) {
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(position.x, 0.25, position.z);
-    scene.add(mesh);
-    return mesh;
+function createObject(geometry, texturePaths, position) {
+    return new Promise((resolve, reject) => {
+        let texturesLoaded = 0;
+        const loader = new THREE.TextureLoader();
+        let wormTextures = [];
+
+        for (let i = 0; i < texturePaths.length; i++) {
+            loader.load(
+                texturePaths[i],
+                (texture) => {
+                    wormTextures[i] = texture; // 使用 wormTextures 陣列
+                    texturesLoaded++;
+
+                    if (texturesLoaded === texturePaths.length) {
+                        const materials = wormTextures.map(tex => new THREE.MeshBasicMaterial({ map: tex }));
+                        const mesh = new THREE.Mesh(geometry, materials);
+                        const halfGridSize = gridSize / 2 - 0.5;
+                        let carrotX, carrotZ;
+                        do {
+                            carrotX = Math.floor(Math.random() * (gridSize - 2)) - (halfGridSize - 1);
+                            carrotZ = Math.floor(Math.random() * (gridSize - 2)) - (halfGridSize - 1);
+                        } while (carrotX === rabbit.position.x && carrotZ === rabbit.position.z);
+                        mesh.position.set(carrotX, geometry.parameters.height / 2, carrotZ);
+                        scene.add(mesh);
+                        resolve(mesh);
+                    }
+                },
+                undefined,
+                (err) => {
+                    console.error(`Error loading worm texture: ${texturePaths[i]}`, err);
+                    reject(err);
+                }
+            );
+        }
+    });
 }
 
 function getRandomGridSize() {
@@ -280,7 +342,7 @@ function moveCarrotRandomly(carrot) {
     }
 
     const jumpHeight = 0.5; // 紅蘿蔔跳躍的高度
-    const jumpDuration = 500; // 紅蘿蔔跳躍動作持續時間
+    const jumpDuration = 300; // 紅蘿蔔跳躍動作持續時間
     const startTime = Date.now();
     const startX = carrot.position.x;
     const startZ = carrot.position.z;
@@ -297,6 +359,14 @@ function moveCarrotRandomly(carrot) {
     const targetX = targetPosition.x;
     const targetZ = targetPosition.z;
 
+    // 計算移動方向
+    const directionX = targetX - startX;
+    const directionZ = targetZ - startZ;
+
+    // 使用 lookAt 使紅蘿蔔朝向目標位置
+    const lookAtPosition = new THREE.Vector3(targetX, carrot.position.y, targetZ);
+    carrot.lookAt(lookAtPosition);
+
     function updateCarrotJump() {
         const elapsedTime = Date.now() - startTime;
         const t = elapsedTime / jumpDuration; // 時間進度，從 0 到 1
@@ -308,8 +378,8 @@ function moveCarrotRandomly(carrot) {
             carrot.position.y = carrot.geometry.parameters.height / 2; // 回到地面
         } else {
             // 計算新的位置，模擬跳躍過程
-            carrot.position.x = startX + (targetX - startX) * t;
-            carrot.position.z = startZ + (targetZ - startZ) * t;
+            carrot.position.x = startX + directionX * t;
+            carrot.position.z = startZ + directionZ * t;
             carrot.position.y = Math.sin(t * Math.PI) * jumpHeight + carrot.geometry.parameters.height / 2; // Y 軸位置根據正弦函數變化
 
             requestAnimationFrame(updateCarrotJump); // 繼續更新跳躍動作
@@ -340,24 +410,55 @@ function checkChickCollision() {
 
 // 創建老鷹
 function createEagle() {
-    const eagleGeometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
-    const eagleMaterial = new THREE.MeshBasicMaterial({ color: 0x8B4513 });
-    eagle = new THREE.Mesh(eagleGeometry, eagleMaterial);
+    const loader = new THREE.TextureLoader();
+    const texturePaths = [
+        '/pictures/eagle/LINE_ALBUM_老鷹_241008_left.jpg',
+        '/pictures/eagle/LINE_ALBUM_老鷹_241008_right.jpg',
+        '/pictures/eagle/LINE_ALBUM_老鷹_241008_head.jpg',
+        '/pictures/eagle/LINE_ALBUM_老鷹_241008_foot.jpg',
+        '/pictures/eagle/LINE_ALBUM_老鷹_241008_face.jpg',
+        '/pictures/eagle/LINE_ALBUM_老鷹_241008_tail.jpg',                                
+    ];    
+    let texturesLoaded = 0;
     
-    // 確保老鷹的初始位置不與兔子重疊
-    const halfGridSize = gridSize / 2 - 0.5;
-    let eagleX, eagleZ;
-    do {
-        eagleX = Math.floor(Math.random() * (gridSize - 2)) - (halfGridSize - 1);
-        eagleZ = Math.floor(Math.random() * (gridSize - 2)) - (halfGridSize - 1);
-    } while (eagleX === rabbit.position.x && eagleZ === rabbit.position.z);
-    
-    eagle.position.set(eagleX, 0.25, eagleZ); // y=0.25 to match carrot's y
-    scene.add(eagle);
+    for (let i = 0; i < texturePaths.length; i++) {
+        loader.load(
+            texturePaths[i],
+            (texture) => {
+                eagleTextures[i] = texture; // 使用 eagleTextures 陣列
+                texturesLoaded++;
+
+                // 當所有紋理都加載完成後
+                if (texturesLoaded === texturePaths.length) {
+                    const materials = eagleTextures.map(tex => new THREE.MeshBasicMaterial({ map: tex }));
+                    eagle = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), materials); // 創建老鷹
+                    
+                    // 確保老鷹的初始位置不與兔子重疊
+                    const halfGridSize = gridSize / 2 - 0.5;
+                    let eagleX, eagleZ;
+                    do {
+                        eagleX = Math.floor(Math.random() * (gridSize - 2)) - (halfGridSize - 1);
+                        eagleZ = Math.floor(Math.random() * (gridSize - 2)) - (halfGridSize - 1);
+                    } while (eagleX === rabbit.position.x && eagleZ === rabbit.position.z);
+                    
+                    eagle.position.set(eagleX, 0.75, eagleZ); // y=0.25 to match carrot's y
+                    scene.add(eagle);
+                }
+            },
+            undefined,
+            (err) => {
+                console.error(`Error loading eagle texture: ${texturePaths[i]}`, err);
+            }
+        );
+    }
 }
+
 
 function animate() {
     requestAnimationFrame(animate);
+
+    // 更新 OrbitControls
+    controls.update();
 
     // 更新兔子的材質以模擬動畫
     if (rabbit && rabbitTextures.length > 0) {
